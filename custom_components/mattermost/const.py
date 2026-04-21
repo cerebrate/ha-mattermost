@@ -26,9 +26,13 @@ ATTR_USERNAME = "username"
 CONF_DEFAULT_CHANNEL = "default_channel"
 
 DATA_CLIENT = "client"
+DATA_COORDINATOR = "coordinator"
 DEFAULT_NAME = "Mattermost"
 DEFAULT_TIMEOUT_SECONDS = 30
 DOMAIN: Final = "mattermost"
+
+# How often to poll the Mattermost server to verify connectivity.
+SCAN_INTERVAL_SECONDS = 300
 
 MATTERMOST_DATA = "data"
 DATA_HASS_CONFIG = "mattermost_hass_config"

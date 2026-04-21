@@ -25,5 +25,12 @@
     "abort": {
       "already_configured": "This Mattermost server is already configured"
     }
+  },
+  "entity": {
+    "binary_sensor": {
+      "connectivity": {
+        "name": "Server connectivity"
+      }
+    }
   }
 }

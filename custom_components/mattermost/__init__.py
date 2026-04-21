@@ -19,14 +19,16 @@ from homeassistant.helpers.typing import ConfigType
 from .const import (
     CONF_DEFAULT_CHANNEL,
     DATA_CLIENT,
+    DATA_COORDINATOR,
     DATA_HASS_CONFIG,
     DOMAIN,
     MATTERMOST_DATA,
 )
+from .coordinator import MattermostDataUpdateCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = [Platform.NOTIFY]
+PLATFORMS = [Platform.BINARY_SENSOR]
 
 # Config entry only - no YAML configuration supported
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
@@ -335,11 +337,16 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             else:
                 url = f"https://{url}"
 
-        # Create and test HTTP client
+        # Create HTTP client
         client = MattermostHTTPClient(hass, url, config[CONF_API_KEY])
-        if not await client.test_connection():
-            raise ConfigEntryNotReady("Could not connect to Mattermost server")
 
+        # Set up the coordinator and perform the initial connectivity check.
+        # async_config_entry_first_refresh raises ConfigEntryNotReady on failure.
+        coordinator = MattermostDataUpdateCoordinator(hass, entry, client)
+        await coordinator.async_config_entry_first_refresh()
+
+    except ConfigEntryNotReady:
+        raise
     except Exception as err:
         _LOGGER.error("Failed to connect to Mattermost: %s", err)
         raise ConfigEntryNotReady from err
@@ -347,10 +354,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = {
         DATA_CLIENT: client,
+        DATA_COORDINATOR: coordinator,
         DATA_HASS_CONFIG: config,
     }
 
-    # Set up notify platform using discovery
+    # Set up the binary_sensor platform via the standard config-entry mechanism.
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
+
+    # Set up notify platform using discovery (legacy notify pattern).
     discovery_data = hass.data[DOMAIN][entry.entry_id].copy()
     discovery_data[CONF_NAME] = "mattermost"
 
@@ -367,8 +378,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
-    if DOMAIN in hass.data and entry.entry_id in hass.data[DOMAIN]:
-        # Remove data
+    unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
+
+    if unload_ok and DOMAIN in hass.data and entry.entry_id in hass.data[DOMAIN]:
         hass.data[DOMAIN].pop(entry.entry_id)
 
-    return True
+    return unload_ok

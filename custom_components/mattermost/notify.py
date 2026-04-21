@@ -44,6 +44,7 @@ from .const import (
     ATTR_USERNAME,
     CONF_DEFAULT_CHANNEL,
     DATA_CLIENT,
+    DATA_COORDINATOR,
     DATA_HASS_CONFIG,
     DOMAIN,
     MATTERMOST_DATA,
@@ -105,6 +106,7 @@ def get_service(
                     hass,
                     entry_data[DATA_CLIENT],
                     entry_data[DATA_HASS_CONFIG],
+                    entry_data.get(DATA_COORDINATOR),
                 )
         _LOGGER.warning("No Mattermost config entry data found")
     else:
@@ -114,6 +116,7 @@ def get_service(
                 hass,
                 discovery_info[DATA_CLIENT],
                 discovery_info[DATA_HASS_CONFIG],
+                discovery_info.get(DATA_COORDINATOR),
             )
         _LOGGER.warning(
             "No Mattermost data in discovery info, keys available: %s",
@@ -145,12 +148,14 @@ class MattermostNotificationService(BaseNotificationService):
         hass: HomeAssistant,
         client,  # MattermostHTTPClient from __init__.py
         config: dict[str, str],
+        coordinator=None,
     ) -> None:
         """Initialize."""
         _LOGGER.info("Initializing MattermostNotificationService")
         self._hass = hass
         self._client = client
         self._config = config
+        self._coordinator = coordinator
         _LOGGER.debug("MattermostNotificationService initialized")
 
         # Check service registry access
@@ -279,6 +284,7 @@ class MattermostNotificationService(BaseNotificationService):
         if failed_targets:
             from homeassistant.exceptions import HomeAssistantError
 
+            self._async_request_health_refresh()
             raise HomeAssistantError(
                 f"Failed to send message to channels: {', '.join(failed_targets)}"
             )
@@ -334,6 +340,7 @@ class MattermostNotificationService(BaseNotificationService):
         if failed_targets:
             from homeassistant.exceptions import HomeAssistantError
 
+            self._async_request_health_refresh()
             raise HomeAssistantError(
                 f"Failed to send file to channels: {', '.join(failed_targets)}"
             )
@@ -423,9 +430,15 @@ class MattermostNotificationService(BaseNotificationService):
         if failed_targets:
             from homeassistant.exceptions import HomeAssistantError
 
+            self._async_request_health_refresh()
             raise HomeAssistantError(
                 f"Failed to send file to channels: {', '.join(failed_targets)}"
             )
+
+    def _async_request_health_refresh(self) -> None:
+        """Ask the connectivity coordinator to re-check the server soon."""
+        if self._coordinator is not None:
+            self._hass.async_create_task(self._coordinator.async_request_refresh())
 
     @staticmethod
     def _process_attachments(attachments: list[dict]) -> list[dict]:
