@@ -38,8 +38,10 @@ from .const import (
     ATTR_URL,
     ATTR_USERNAME,
     CONF_CONFIG_ENTRY_ID,
+    CONF_DEFAULT_CHANNEL,
     DATA_CLIENT,
     DATA_COORDINATOR,
+    DATA_HASS_CONFIG,
     DOMAIN,
     SERVICE_SEND_MESSAGE,
 )
@@ -90,7 +92,7 @@ SEND_MESSAGE_SCHEMA = vol.Schema(
         vol.Optional(CONF_CONFIG_ENTRY_ID): str,
         vol.Optional(ATTR_TITLE): str,
         vol.Optional(ATTR_MESSAGE, default=""): str,
-        vol.Required(ATTR_TARGET): vol.All(cv.ensure_list, [str]),
+        vol.Optional(ATTR_TARGET): vol.All(cv.ensure_list, [str]),
         vol.Optional(ATTR_FILE): vol.Any(FILE_PATH_SCHEMA, FILE_URL_SCHEMA),
         vol.Optional(ATTR_ATTACHMENTS): [ATTACHMENT_SCHEMA],
     }
@@ -344,7 +346,10 @@ async def _handle_send_message(hass: HomeAssistant, call: ServiceCall) -> None:
 
     message = call.data.get(ATTR_MESSAGE, "")
     title = call.data.get(ATTR_TITLE)
-    targets = _sanitize_channel_names(call.data[ATTR_TARGET])
+    target = call.data.get(ATTR_TARGET)
+    if target is None:
+        target = [entry_data[DATA_HASS_CONFIG][CONF_DEFAULT_CHANNEL]]
+    targets = _sanitize_channel_names(target)
     attachments = call.data.get(ATTR_ATTACHMENTS)
     file_data = call.data.get(ATTR_FILE)
 

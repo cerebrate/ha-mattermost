@@ -8,8 +8,10 @@ import pytest
 from homeassistant.exceptions import ServiceValidationError
 
 from custom_components.mattermost.const import (
+    CONF_DEFAULT_CHANNEL,
     DATA_CLIENT,
     DATA_COORDINATOR,
+    DATA_HASS_CONFIG,
     DOMAIN,
     SERVICE_SEND_MESSAGE,
 )
@@ -119,6 +121,29 @@ async def test_attachments_and_multi_target_partial_failure(hass):
     client.post_message.assert_awaited_once()
     _, kwargs = client.post_message.call_args
     assert kwargs["props"]["attachments"][0]["author_name"] == "Home Assistant"
+
+
+async def test_omitted_target_defaults_to_entry_default_channel(hass):
+    await async_register_services(hass)
+
+    client = _make_client()
+    hass.data[DOMAIN] = {
+        "only_entry": {
+            DATA_CLIENT: client,
+            DATA_COORDINATOR: None,
+            DATA_HASS_CONFIG: {CONF_DEFAULT_CHANNEL: "general"},
+        }
+    }
+
+    await hass.services.async_call(
+        DOMAIN,
+        SERVICE_SEND_MESSAGE,
+        {"message": "hello"},
+        blocking=True,
+    )
+
+    client.resolve_channel_id.assert_awaited_with("general")
+    client.post_message.assert_awaited_once()
 
 
 async def test_local_file_routes_through_upload(hass, tmp_path):

@@ -83,7 +83,7 @@
         },
         "target": {
           "name": "Channel",
-          "description": "Channel name, display name, or channel ID. Can be a single channel or list of channels."
+          "description": "Channel name, display name, or channel ID. Can be a single channel or list of channels. Defaults to the server's configured default channel if omitted."
         },
         "file": {
           "name": "File",

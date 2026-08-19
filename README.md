@@ -86,7 +86,7 @@ This is the simplest path for basic notifications. For channel targeting, attach
 
 ### `mattermost.send_message` Service
 
-`mattermost.send_message` has full feature parity with `notify.mattermost` (see examples further down — every `notify.mattermost` example in this README works identically as `mattermost.send_message`, just swap the action name) and can be used outside of notification contexts too. If you have more than one Mattermost server configured, pass `config_entry_id` to select which one:
+`mattermost.send_message` has full feature parity with `notify.mattermost` (see examples further down — every `notify.mattermost` example in this README works identically as `mattermost.send_message`, just swap the action name) and can be used outside of notification contexts too. `target` is optional and defaults to the server's configured default channel if omitted. If you have more than one Mattermost server configured, pass `config_entry_id` to select which one:
 
 ```yaml
 action: mattermost.send_message

@@ -285,9 +285,15 @@ class MattermostHTTPClient:
             return channel_name
 
         try:
-            # Try to get channel by name across all teams
+            # Try to get channel by name across all teams the bot belongs to.
+            # Note: /api/v4/teams lists every team on the server and requires
+            # the list_all_teams (sysadmin) permission -- an ordinary bot
+            # account doesn't have that, so it must be /api/v4/users/me/teams
+            # instead, which lists only the teams this account is a member of.
             async with session.get(
-                f"{self.base_url}/api/v4/teams", headers=self.headers, ssl=False
+                f"{self.base_url}/api/v4/users/me/teams",
+                headers=self.headers,
+                ssl=False,
             ) as response:
                 if response.status != 200:
                     error_text = await response.text()
@@ -312,9 +318,10 @@ class MattermostHTTPClient:
                             channel_data = await channel_response.json()
                             return channel_data["id"]
 
-                    # Second try: search all channels by display name
+                    # Second try: search channels by display name, among the
+                    # channels the bot has joined on this team.
                     async with session.get(
-                        f"{self.base_url}/api/v4/teams/{team_id}/channels",
+                        f"{self.base_url}/api/v4/users/me/teams/{team_id}/channels",
                         headers=self.headers,
                         ssl=False,
                     ) as channels_response:

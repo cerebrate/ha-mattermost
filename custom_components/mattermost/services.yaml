@@ -60,9 +60,9 @@ send_message:
         text:
     target:
       name: Channel
-      description: Channel name, display name (e.g. 'general', '#general'), or channel ID. Can be a single channel or list of channels.
+      description: Channel name, display name (e.g. 'general', '#general'), or channel ID. Can be a single channel or list of channels. Defaults to the server's configured default channel if omitted.
       example: ["general", "#alerts", "jgw476jxx7rd5ebefxz7x8h1mo"]
-      required: true
+      required: false
       selector:
         text:
           multiple: true

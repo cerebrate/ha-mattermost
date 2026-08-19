@@ -45,7 +45,7 @@ class TestResolveChannelId:
     async def test_resolve_by_api_name(self, mattermost_client) -> None:
         with aioresponses() as mocked:
             mocked.get(
-                f"{TEST_URL}/api/v4/teams",
+                f"{TEST_URL}/api/v4/users/me/teams",
                 payload=[{"id": "team1", "name": "team1"}],
             )
             mocked.get(
@@ -58,7 +58,7 @@ class TestResolveChannelId:
     async def test_resolve_by_display_name_fallback(self, mattermost_client) -> None:
         with aioresponses() as mocked:
             mocked.get(
-                f"{TEST_URL}/api/v4/teams",
+                f"{TEST_URL}/api/v4/users/me/teams",
                 payload=[{"id": "team1", "name": "team1"}],
             )
             mocked.get(
@@ -66,7 +66,7 @@ class TestResolveChannelId:
                 status=404,
             )
             mocked.get(
-                f"{TEST_URL}/api/v4/teams/team1/channels",
+                f"{TEST_URL}/api/v4/users/me/teams/team1/channels",
                 payload=[{"id": CHANNEL_ID, "display_name": "#general"}],
             )
             result = await mattermost_client.resolve_channel_id("general")
@@ -75,7 +75,7 @@ class TestResolveChannelId:
     async def test_not_found_returns_none(self, mattermost_client) -> None:
         with aioresponses() as mocked:
             mocked.get(
-                f"{TEST_URL}/api/v4/teams",
+                f"{TEST_URL}/api/v4/users/me/teams",
                 payload=[{"id": "team1", "name": "team1"}],
             )
             mocked.get(
@@ -83,7 +83,7 @@ class TestResolveChannelId:
                 status=404,
             )
             mocked.get(
-                f"{TEST_URL}/api/v4/teams/team1/channels",
+                f"{TEST_URL}/api/v4/users/me/teams/team1/channels",
                 payload=[],
             )
             result = await mattermost_client.resolve_channel_id("missing")
