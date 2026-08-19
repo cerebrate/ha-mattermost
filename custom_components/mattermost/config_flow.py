@@ -4,12 +4,14 @@ from __future__ import annotations
 
 import logging
 from typing import Any
+from urllib.parse import urlparse
 
 import aiohttp
 import voluptuous as vol
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_API_KEY, CONF_URL
 
+from .api import normalize_base_url
 from .const import CONF_DEFAULT_CHANNEL, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
@@ -62,32 +64,9 @@ class MattermostFlowHandler(ConfigFlow, domain=DOMAIN):
     ) -> tuple[str, None] | tuple[None, dict[str, str]]:
         """Try connecting to Mattermost."""
         try:
-            # Parse the URL to extract components for the driver
-            from urllib.parse import urlparse
-
             _LOGGER.debug("Testing connection with URL: %s", url)
 
-            # Handle various URL formats - clean up if user included API path
-            clean_url = url
-            if "/api/v4" in clean_url:
-                # Remove API path if user included it
-                clean_url = clean_url.split("/api/v4")[0]
-
-            # Handle various URL formats
-            if not clean_url.startswith(("http://", "https://")):
-                # Default to HTTP for local IPs, HTTPS for domains
-                if (
-                    clean_url.startswith("192.168.")
-                    or clean_url.startswith("10.")
-                    or clean_url.startswith("127.")
-                    or "localhost" in clean_url
-                ):
-                    test_url = f"http://{clean_url}"
-                else:
-                    test_url = f"https://{clean_url}"
-            else:
-                test_url = clean_url
-
+            test_url = normalize_base_url(url)
             parsed_url = urlparse(test_url)
             base_url = f"{parsed_url.scheme}://{parsed_url.hostname}"
             if parsed_url.port:

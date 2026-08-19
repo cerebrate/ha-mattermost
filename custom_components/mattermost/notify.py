@@ -7,7 +7,6 @@ import os
 from typing import Any
 from urllib.parse import urlparse
 
-import aiohttp
 import voluptuous as vol
 from homeassistant.components.notify import (
     ATTR_DATA,
@@ -146,7 +145,7 @@ class MattermostNotificationService(BaseNotificationService):
     def __init__(
         self,
         hass: HomeAssistant,
-        client,  # MattermostHTTPClient from __init__.py
+        client,  # MattermostHTTPClient from api.py
         config: dict[str, str],
         coordinator=None,
     ) -> None:
@@ -371,6 +370,8 @@ class MattermostNotificationService(BaseNotificationService):
         session = aiohttp_client.async_get_clientsession(self._hass)
 
         # Fetch the remote file
+        import aiohttp
+
         auth = aiohttp.BasicAuth(username, password) if username and password else None
 
         try:
@@ -469,17 +470,18 @@ class MattermostNotificationService(BaseNotificationService):
                 )
                 return channel_name
 
-            # Use our HTTP client to get the channel ID from channel name
-            async with aiohttp.ClientSession() as session:
-                channel_id = await self._client._get_channel_id(session, channel_name)
-                if channel_id:
-                    _LOGGER.debug(
-                        "Resolved channel name '%s' to ID: %s", channel_name, channel_id
-                    )
-                    return channel_id
-                else:
-                    _LOGGER.error("Could not resolve channel name: %s", channel_name)
-                    return None
+            # Delegate to the client's single public channel-resolution entry
+            # point rather than opening our own session and reaching into its
+            # "private" _get_channel_id method.
+            channel_id = await self._client.resolve_channel_id(channel_name)
+            if channel_id:
+                _LOGGER.debug(
+                    "Resolved channel name '%s' to ID: %s", channel_name, channel_id
+                )
+                return channel_id
+            else:
+                _LOGGER.error("Could not resolve channel name: %s", channel_name)
+                return None
 
         except Exception as err:
             _LOGGER.error("Could not find channel %s: %s", channel_name, err)
