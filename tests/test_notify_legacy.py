@@ -6,10 +6,8 @@ from unittest.mock import AsyncMock
 
 import pytest
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import issue_registry as ir
 
 import custom_components.mattermost.notify as notify_mod
-from custom_components.mattermost.const import ISSUE_DEPRECATED_NOTIFY_SERVICE
 from custom_components.mattermost.notify import MattermostNotificationService
 
 CHANNEL_ID = "a" * 26
@@ -109,12 +107,3 @@ async def test_deprecation_warning_logged_once(hass, mock_client, caplog):
 
     deprecation_logs = [r for r in caplog.records if "deprecated" in r.message]
     assert len(deprecation_logs) == 1
-
-
-async def test_deprecation_repair_issue_created(hass, mock_client):
-    MattermostNotificationService(hass, mock_client, {"default_channel": "general"})
-    issue_registry = ir.async_get(hass)
-    issue = issue_registry.async_get_issue(
-        "mattermost", ISSUE_DEPRECATED_NOTIFY_SERVICE
-    )
-    assert issue is not None

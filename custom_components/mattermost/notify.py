@@ -17,7 +17,6 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_PATH, CONF_URL
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import HomeAssistantError
-from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
@@ -33,7 +32,6 @@ from .const import (
     DATA_COORDINATOR,
     DATA_HASS_CONFIG,
     DOMAIN,
-    ISSUE_DEPRECATED_NOTIFY_SERVICE,
 )
 from .services import DATA_SCHEMA, MattermostMessenger, _sanitize_channel_names
 
@@ -105,14 +103,6 @@ class MattermostNotificationService(BaseNotificationService):
                 "release. Use the Mattermost notify entity or the "
                 "mattermost.send_message service instead."
             )
-        ir.async_create_issue(
-            hass,
-            DOMAIN,
-            ISSUE_DEPRECATED_NOTIFY_SERVICE,
-            is_fixable=False,
-            severity=ir.IssueSeverity.WARNING,
-            translation_key=ISSUE_DEPRECATED_NOTIFY_SERVICE,
-        )
 
     @property
     def name(self) -> str:

@@ -10,6 +10,7 @@ from homeassistant.const import CONF_API_KEY, CONF_NAME, CONF_URL, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import discovery
+from homeassistant.helpers import issue_registry as ir
 from homeassistant.helpers.typing import ConfigType
 
 from .api import MattermostHTTPClient, normalize_base_url
@@ -22,6 +23,7 @@ from .const import (
     DATA_HASS_CONFIG,
     DEFAULT_ENABLE_ASSIST_BRIDGE,
     DOMAIN,
+    ISSUE_DEPRECATED_NOTIFY_SERVICE,
 )
 from .coordinator import MattermostDataUpdateCoordinator
 from .services import async_register_services
@@ -82,6 +84,19 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         DOMAIN,
         discovery_data,
         config,
+    )
+
+    # notify.mattermost (registered above) is soft-deprecated. This must run
+    # here rather than from notify.py's get_service(), which HA's legacy
+    # notify platform calls from an executor thread -- issue_registry calls
+    # require the event loop.
+    ir.async_create_issue(
+        hass,
+        DOMAIN,
+        ISSUE_DEPRECATED_NOTIFY_SERVICE,
+        is_fixable=False,
+        severity=ir.IssueSeverity.WARNING,
+        translation_key=ISSUE_DEPRECATED_NOTIFY_SERVICE,
     )
 
     # Optionally start the Mattermost -> Assist chat bridge.
