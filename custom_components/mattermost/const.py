@@ -27,9 +27,13 @@ ATTR_USERNAME = "username"
 
 CONF_CONFIG_ENTRY_ID = "config_entry_id"
 CONF_DEFAULT_CHANNEL = "default_channel"
+CONF_ENABLE_ASSIST_BRIDGE = "enable_assist_bridge"
+CONF_ASSIST_AGENT_ID = "assist_agent_id"
 
+DATA_ASSIST_BRIDGE = "assist_bridge"
 DATA_CLIENT = "client"
 DATA_COORDINATOR = "coordinator"
+DEFAULT_ENABLE_ASSIST_BRIDGE = False
 DEFAULT_NAME = "Mattermost"
 DEFAULT_TIMEOUT_SECONDS = 30
 DOMAIN: Final = "mattermost"

@@ -8,11 +8,23 @@ from urllib.parse import urlparse
 
 import aiohttp
 import voluptuous as vol
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
 from homeassistant.const import CONF_API_KEY, CONF_URL
+from homeassistant.core import callback
 
 from .api import normalize_base_url
-from .const import CONF_DEFAULT_CHANNEL, DOMAIN
+from .const import (
+    CONF_ASSIST_AGENT_ID,
+    CONF_DEFAULT_CHANNEL,
+    CONF_ENABLE_ASSIST_BRIDGE,
+    DEFAULT_ENABLE_ASSIST_BRIDGE,
+    DOMAIN,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -88,6 +100,14 @@ class MattermostFlowHandler(ConfigFlow, domain=DOMAIN):
             errors=errors,
         )
 
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: ConfigEntry,
+    ) -> MattermostOptionsFlowHandler:
+        """Create the options flow."""
+        return MattermostOptionsFlowHandler()
+
     async def _async_try_connect(
         self, token: str, url: str, channel: str
     ) -> tuple[str, None] | tuple[None, dict[str, str]]:
@@ -149,3 +169,31 @@ class MattermostFlowHandler(ConfigFlow, domain=DOMAIN):
         except Exception:
             _LOGGER.exception("Unexpected exception")
             return "unknown", None
+
+
+class MattermostOptionsFlowHandler(OptionsFlow):
+    """Handle Mattermost options (the Assist chat bridge toggle)."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Manage the options."""
+        if user_input is not None:
+            return self.async_create_entry(title="", data=user_input)
+
+        current = self.config_entry.options
+        schema = vol.Schema(
+            {
+                vol.Optional(
+                    CONF_ENABLE_ASSIST_BRIDGE,
+                    default=current.get(
+                        CONF_ENABLE_ASSIST_BRIDGE, DEFAULT_ENABLE_ASSIST_BRIDGE
+                    ),
+                ): bool,
+                vol.Optional(
+                    CONF_ASSIST_AGENT_ID,
+                    description={"suggested_value": current.get(CONF_ASSIST_AGENT_ID)},
+                ): str,
+            }
+        )
+        return self.async_show_form(step_id="init", data_schema=schema)

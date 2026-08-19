@@ -41,6 +41,22 @@
       "reconfigure_successful": "Re-configuration was successful"
     }
   },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Mattermost options",
+        "description": "Optionally bridge this Mattermost bot to Home Assistant's Assist feature, so you can chat with Home Assistant via Mattermost direct messages or @mentions.",
+        "data": {
+          "enable_assist_bridge": "Enable Assist chat bridge",
+          "assist_agent_id": "Assist conversation agent"
+        },
+        "data_description": {
+          "enable_assist_bridge": "When enabled, anyone who can send this bot a Mattermost direct message, or @mention it in a channel it belongs to, can issue Home Assistant voice/chat commands. Only enable this if you trust everyone with access to this bot.",
+          "assist_agent_id": "Optional: the specific Assist conversation agent to use. Leave blank to use the default agent."
+        }
+      }
+    }
+  },
   "entity": {
     "binary_sensor": {
       "connectivity": {

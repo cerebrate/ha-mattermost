@@ -13,7 +13,16 @@ from homeassistant.helpers import discovery
 from homeassistant.helpers.typing import ConfigType
 
 from .api import MattermostHTTPClient, normalize_base_url
-from .const import DATA_CLIENT, DATA_COORDINATOR, DATA_HASS_CONFIG, DOMAIN
+from .assist_bridge import MattermostAssistBridge
+from .const import (
+    CONF_ENABLE_ASSIST_BRIDGE,
+    DATA_ASSIST_BRIDGE,
+    DATA_CLIENT,
+    DATA_COORDINATOR,
+    DATA_HASS_CONFIG,
+    DEFAULT_ENABLE_ASSIST_BRIDGE,
+    DOMAIN,
+)
 from .coordinator import MattermostDataUpdateCoordinator
 from .services import async_register_services
 
@@ -75,7 +84,21 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         config,
     )
 
+    # Optionally start the Mattermost -> Assist chat bridge.
+    bridge = None
+    if entry.options.get(CONF_ENABLE_ASSIST_BRIDGE, DEFAULT_ENABLE_ASSIST_BRIDGE):
+        bridge = MattermostAssistBridge(hass, entry, client)
+        await bridge.async_setup()
+    hass.data[DOMAIN][entry.entry_id][DATA_ASSIST_BRIDGE] = bridge
+
+    entry.async_on_unload(entry.add_update_listener(_async_update_listener))
+
     return True
+
+
+async def _async_update_listener(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Reload the entry when its options change (e.g. the Assist bridge toggle)."""
+    await hass.config_entries.async_reload(entry.entry_id)
 
 
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
@@ -83,6 +106,10 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
 
     if unload_ok and DOMAIN in hass.data and entry.entry_id in hass.data[DOMAIN]:
+        entry_data = hass.data[DOMAIN][entry.entry_id]
+        bridge = entry_data.get(DATA_ASSIST_BRIDGE)
+        if bridge is not None:
+            await bridge.async_unload()
         hass.data[DOMAIN].pop(entry.entry_id)
 
     return unload_ok

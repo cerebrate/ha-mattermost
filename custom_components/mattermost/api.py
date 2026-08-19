@@ -241,6 +241,26 @@ class MattermostHTTPClient:
                 _LOGGER.error("Error uploading file: %s", e)
                 return False
 
+    async def get_me(self) -> dict | None:
+        """Fetch the bot's own user record from /api/v4/users/me."""
+        async with aiohttp.ClientSession() as session:
+            try:
+                async with session.get(
+                    f"{self.base_url}/api/v4/users/me",
+                    headers=self.headers,
+                    timeout=aiohttp.ClientTimeout(total=10),
+                    ssl=False,
+                ) as response:
+                    if response.status != 200:
+                        _LOGGER.error(
+                            "Could not fetch bot user record: %s", response.status
+                        )
+                        return None
+                    return await response.json()
+            except Exception as e:
+                _LOGGER.error("Error fetching bot user record: %s", e)
+                return None
+
     async def resolve_channel_id(self, channel: str) -> str | None:
         """Resolve a channel name (or pass through a channel ID) to a channel ID.
 

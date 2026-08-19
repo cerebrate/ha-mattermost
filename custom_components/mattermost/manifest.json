@@ -3,6 +3,7 @@
   "name": "Mattermost",
   "codeowners": ["@zacs"],
   "config_flow": true,
+  "dependencies": ["conversation"],
   "documentation": "https://github.com/zacs/ha-mattermost",
   "integration_type": "service",
   "iot_class": "local_push",
