@@ -15,10 +15,11 @@ from homeassistant.helpers.typing import ConfigType
 from .api import MattermostHTTPClient, normalize_base_url
 from .const import DATA_CLIENT, DATA_COORDINATOR, DATA_HASS_CONFIG, DOMAIN
 from .coordinator import MattermostDataUpdateCoordinator
+from .services import async_register_services
 
 _LOGGER = logging.getLogger(__name__)
 
-PLATFORMS = [Platform.BINARY_SENSOR]
+PLATFORMS = [Platform.BINARY_SENSOR, Platform.NOTIFY]
 
 # Config entry only - no YAML configuration supported
 CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
@@ -26,6 +27,7 @@ CONFIG_SCHEMA = cv.config_entry_only_config_schema(DOMAIN)
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the Mattermost component."""
+    await async_register_services(hass)
     return True
 
 
@@ -57,10 +59,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         DATA_HASS_CONFIG: config,
     }
 
-    # Set up the binary_sensor platform via the standard config-entry mechanism.
+    # Set up the binary_sensor and notify-entity platforms via the standard
+    # config-entry mechanism.
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # Set up notify platform using discovery (legacy notify pattern).
+    # Also set up the legacy notify.mattermost service via discovery (soft-deprecated).
     discovery_data = hass.data[DOMAIN][entry.entry_id].copy()
     discovery_data[CONF_NAME] = "mattermost"
 
