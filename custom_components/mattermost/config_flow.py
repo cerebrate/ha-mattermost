@@ -17,6 +17,12 @@ from .const import CONF_DEFAULT_CHANNEL, DOMAIN
 _LOGGER = logging.getLogger(__name__)
 
 
+def _title_for(url: str) -> str:
+    """Derive a UI-distinguishing title for a config entry from its server URL."""
+    hostname = urlparse(normalize_base_url(url)).hostname or url
+    return f"Mattermost ({hostname})"
+
+
 class MattermostFlowHandler(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Mattermost."""
 
@@ -26,7 +32,20 @@ class MattermostFlowHandler(ConfigFlow, domain=DOMAIN):
         self, user_input: dict[str, Any] | None = None
     ) -> ConfigFlowResult:
         """Handle a flow initiated by the user."""
+        return await self._async_step_connect(user_input, is_reconfigure=False)
+
+    async def async_step_reconfigure(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Handle reconfiguration of an existing entry."""
+        return await self._async_step_connect(user_input, is_reconfigure=True)
+
+    async def _async_step_connect(
+        self, user_input: dict[str, Any] | None, is_reconfigure: bool
+    ) -> ConfigFlowResult:
+        """Shared logic for the user and reconfigure steps."""
         errors = {}
+        step_id = "reconfigure" if is_reconfigure else "user"
 
         if user_input is not None:
             error, info = await self._async_try_connect(
@@ -40,22 +59,32 @@ class MattermostFlowHandler(ConfigFlow, domain=DOMAIN):
                 await self.async_set_unique_id(
                     f"{user_input[CONF_URL]}_{user_input[CONF_API_KEY][:8]}"
                 )
+                if is_reconfigure:
+                    self._abort_if_unique_id_mismatch()
+                    return self.async_update_reload_and_abort(
+                        self._get_reconfigure_entry(),
+                        data_updates=user_input,
+                    )
                 self._abort_if_unique_id_configured()
                 return self.async_create_entry(
-                    title="Mattermost",
+                    title=_title_for(user_input[CONF_URL]),
                     data=user_input,
                 )
 
-        user_input = user_input or {}
+        defaults = self._get_reconfigure_entry().data if is_reconfigure else {}
+        schema = vol.Schema(
+            {
+                vol.Required(CONF_URL): str,
+                vol.Required(CONF_API_KEY): str,
+                vol.Required(CONF_DEFAULT_CHANNEL): str,
+            }
+        )
+        if defaults:
+            schema = self.add_suggested_values_to_schema(schema, defaults)
+
         return self.async_show_form(
-            step_id="user",
-            data_schema=vol.Schema(
-                {
-                    vol.Required(CONF_URL): str,
-                    vol.Required(CONF_API_KEY): str,
-                    vol.Required(CONF_DEFAULT_CHANNEL): str,
-                }
-            ),
+            step_id=step_id,
+            data_schema=schema,
             errors=errors,
         )
 

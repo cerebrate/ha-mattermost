@@ -15,6 +15,20 @@
           "api_key": "Bot access token generated from your Mattermost bot account. This is NOT the Token ID.",
           "default_channel": "Default channel name for notifications (e.g., general, alerts)."
         }
+      },
+      "reconfigure": {
+        "title": "Reconfigure Mattermost",
+        "description": "Update the connection settings for this Mattermost server.",
+        "data": {
+          "url": "Server URL",
+          "api_key": "Bot Access Token",
+          "default_channel": "Default Channel"
+        },
+        "data_description": {
+          "url": "URL of your Mattermost server, including port if needed (e.g., chat.company.com or 192.168.1.100:8065).",
+          "api_key": "Bot access token generated from your Mattermost bot account. This is NOT the Token ID.",
+          "default_channel": "Default channel name for notifications (e.g., general, alerts)."
+        }
       }
     },
     "error": {
@@ -23,7 +37,8 @@
       "unknown": "[%key:common::config_flow::error::unknown%]"
     },
     "abort": {
-      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]"
+      "already_configured": "[%key:common::config_flow::abort::already_configured_device%]",
+      "reconfigure_successful": "[%key:common::config_flow::abort::reconfigure_successful%]"
     }
   },
   "entity": {

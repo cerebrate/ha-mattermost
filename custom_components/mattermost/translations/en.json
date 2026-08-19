@@ -15,6 +15,20 @@
           "api_key": "Bot access token generated from your Mattermost bot account. This is NOT the Token ID.",
           "default_channel": "Default channel name for notifications (e.g., general, alerts)."
         }
+      },
+      "reconfigure": {
+        "title": "Reconfigure Mattermost",
+        "description": "Update the connection settings for this Mattermost server.",
+        "data": {
+          "url": "Server URL",
+          "api_key": "Bot Access Token",
+          "default_channel": "Default Channel"
+        },
+        "data_description": {
+          "url": "URL of your Mattermost server, including port if needed (e.g., chat.company.com or 192.168.1.100:8065).",
+          "api_key": "Bot access token generated from your Mattermost bot account. This is NOT the Token ID.",
+          "default_channel": "Default channel name for notifications (e.g., general, alerts)."
+        }
       }
     },
     "error": {
@@ -23,7 +37,8 @@
       "unknown": "An unexpected error occurred during setup"
     },
     "abort": {
-      "already_configured": "This Mattermost server is already configured"
+      "already_configured": "This Mattermost server is already configured",
+      "reconfigure_successful": "Re-configuration was successful"
     }
   },
   "entity": {
