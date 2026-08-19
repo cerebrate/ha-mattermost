@@ -102,10 +102,13 @@ jobs:
       - name: "Checkout"
         uses: "actions/checkout@v4"
 
+      # The pinned homeassistant test dependency (see requirements_test.txt)
+      # requires Python >=3.13.2 -- newer than the 3.11 used by the other
+      # jobs here, which only need to run black/isort/flake8.
       - name: "Setup Python"
         uses: "actions/setup-python@v4"
         with:
-          python-version: "3.11"
+          python-version: "3.13"
 
       - name: "Install test dependencies"
         run: python3 -m pip install -r requirements_test.txt
