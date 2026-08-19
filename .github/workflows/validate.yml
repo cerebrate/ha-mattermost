@@ -7,8 +7,9 @@ on:
       - master
   pull_request:
     branches:
-      - main 
+      - main
       - master
+  workflow_dispatch:
 
 jobs:
   validate:
